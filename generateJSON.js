@@ -52,6 +52,7 @@ function generateJsonFromLocalStorage() {
         generationDate: new Date().toISOString(),
         rtuSerial: localStorage.getItem('session_rtuSerial') || 'N/A',
         contractNo: localStorage.getItem('session_contractNo') || 'N/A',
+        Batch_No: localStorage.getItem('session_Batch_No') || 'N/A',
         testerName: localStorage.getItem('session_name') || 'N/A'
     };
     
@@ -76,7 +77,14 @@ function generateJsonFile() {
         a.href = url;
         const now = new Date();
         const dateformat = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-        a.download = `${dateformat}_RTU_Backup_${localStorage.getItem('session_contractNo') || 'ContractNo'}_${localStorage.getItem('session_rtuSerial') || 'Template'}.json`;
+
+        // Get contract number and batch number for the filename
+        // Uses the same localStorage key (session_Batch_No) that rtudetail.js saves
+        const contractNo = localStorage.getItem('session_contractNo') || 'ContractNo';
+        const batchNo = localStorage.getItem('session_Batch_No') || 'BatchNo';
+
+        // Build filename: date_RTU_Backup_{contractNo}(B{batchNo})_{rtuSerialOrTemplate}.json
+        a.download = `${dateformat}_RTU_Backup_${contractNo}(B${batchNo})_${localStorage.getItem('session_rtuSerial') || 'Template'}.json`;
         document.body.appendChild(a);
         a.click();
         
