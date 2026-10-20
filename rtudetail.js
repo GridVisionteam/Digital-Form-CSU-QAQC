@@ -10,11 +10,13 @@ function saveCurrentRTUDetails() {
     const contractNoInput = document.getElementById('contractNo');
     const projectNameInput = document.getElementById('projectName');
     const bcSerialInput = document.getElementById('BCSerial');
+    const batchNoInput = document.getElementById('batchNo');
 
     if (rtuSerialInput) localStorage.setItem('session_rtuSerial', rtuSerialInput.value.trim());
     if (contractNoInput) localStorage.setItem('session_contractNo', contractNoInput.value.trim());
     if (projectNameInput) localStorage.setItem('session_projectName', projectNameInput.value.trim());
     if (bcSerialInput) localStorage.setItem('session_bcSerial', bcSerialInput.value.trim());
+    if (batchNoInput) localStorage.setItem('session_Batch_No', batchNoInput.value.trim());
 }
 
 // --- Utility Functions ---
@@ -44,11 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const contractNoInput = document.getElementById('contractNo');
     const projectNameInput = document.getElementById('projectName');
     const bcSerialInput = document.getElementById('BCSerial');
+    const batchNoInput = document.getElementById('batchNo');
 
     if (rtuSerialInput) rtuSerialInput.value = getStoredValue('session_rtuSerial');
     if (contractNoInput) contractNoInput.value = getStoredValue('session_contractNo');
     if (projectNameInput) projectNameInput.value = getStoredValue('session_projectName');
     if (bcSerialInput) bcSerialInput.value = getStoredValue('session_bcSerial');
+    if (batchNoInput) batchNoInput.value = getStoredValue('session_Batch_No');
 });
 
 function goToBack() {
@@ -59,13 +63,16 @@ function goToBack() {
 function goToBQPage() {
     const contractNoInput = document.getElementById("contractNo");
     const projectNameInput = document.getElementById("projectName");
+    const batchNoInput = document.getElementById("batchNo");
 
     const contractNo = contractNoInput ? contractNoInput.value.trim() : "";
     const projectName = projectNameInput ? projectNameInput.value.trim() : "";
+    const batchNo = batchNoInput ? batchNoInput.value.trim() : "";
 
-    // Only validate Contract No. and Project Name - RTU Serial and BC Serial are optional now
-    if (!contractNo || !projectName) {
-        showCustomAlert("Please fill in all fields (Contract No. and Project Name)");
+    // Contract No., Project Name, and Batch No. are required.
+    // RTU Serial and BC Serial are optional.
+    if (!contractNo || !projectName || !batchNo) {
+        showCustomAlert("Please fill in all required fields (Contract No., Project Name, and Batch No.)");
         return;
     }
 
