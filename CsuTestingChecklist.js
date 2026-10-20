@@ -36,6 +36,13 @@ const LBS3_ITEMS = [
     { No: "7", IOModuleCard: "XZ1D:26", Description: "EFI 2 (SPARE)", IOA: "110", Status: "On" }
 ];
 
+// ============================================================
+// SCADA MODE HELPERS
+// ============================================================
+function isScadaReadyMode() {
+    return localStorage.getItem('scadaMode') === 'ready';
+}
+
 // Main initialization when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved test results if available
@@ -62,6 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load any saved data
     loadPreRequisiteTestData();
 
+    // Hide I/O Module Card, IOA and Supervisory columns if in SCADA ready mode
+    applyScadaReadyColumnVisibility();
+
     // Attach event listeners to navigation buttons
     attachNavigationEvents();
 
@@ -69,18 +79,65 @@ document.addEventListener('DOMContentLoaded', function() {
     setupInputValidation();
 });
 
+// ============================================================
+// SCADA READY MODE - HIDE COLUMNS
+// ============================================================
+// Column indexes (0-based):
+//   0 = No.
+//   1 = I/O Module Card   <-- hide in SCADA ready
+//   2 = Description
+//   3 = IOA               <-- hide in SCADA ready
+//   4 = Status
+//   5 = Remote
+//   6 = Supervisory       <-- hide in SCADA ready
+function applyScadaReadyColumnVisibility() {
+    if (!isScadaReadyMode()) return;
+
+    const HIDDEN_COLUMN_INDEXES = [1, 3, 6]; // IOModuleCard, IOA, Supervisory
+    const tbodyIds = ['LBS1Tbody', 'LBS2Tbody', 'LBS3Tbody'];
+
+    tbodyIds.forEach(function(tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+
+        const table = tbody.closest('table');
+        if (!table) return;
+
+        // Hide header cells
+        const headerCells = table.querySelectorAll('thead tr th');
+        headerCells.forEach(function(th, idx) {
+            if (HIDDEN_COLUMN_INDEXES.includes(idx)) {
+                th.style.display = 'none';
+            }
+        });
+
+        // Hide body cells
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(function(row) {
+            const cells = row.querySelectorAll('td');
+            cells.forEach(function(td, idx) {
+                if (HIDDEN_COLUMN_INDEXES.includes(idx)) {
+                    td.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    console.log('SCADA ready mode: I/O Module Card, IOA and Supervisory columns hidden.');
+}
+
 // Function to setup input validation for Remote/Supervisory fields
 function setupInputValidation() {
     // Function to validate a single input
     function validateInput(input) {
         const value = input.value;
-        
+
         // If empty, allow it (user can clear)
         if (value === '') {
             input.dataset.previousValue = '';
             return true;
         }
-        
+
         // Only allow "/" or "-"
         if (value !== '/' && value !== '-') {
             const previousValue = input.dataset.previousValue || '';
@@ -108,14 +165,14 @@ function setupInputValidation() {
         if (input.name && (input.name.includes('remote') || input.name.includes('supervisory'))) {
             // Remove existing listeners to avoid duplicates
             input.removeEventListener('input', input._validationHandler);
-            
+
             // Create and store the handler
             const handler = function() {
                 validateInput(this);
             };
             input._validationHandler = handler;
             input.addEventListener('input', handler);
-            
+
             // Store initial value
             input.dataset.previousValue = input.value;
         }
@@ -127,7 +184,7 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
 
-    const savedArray = dataKey === 'lbs3' 
+    const savedArray = dataKey === 'lbs3'
         ? (window.csuTestingChecklistResults.lbs3 || [])
         : dataKey === 'lbs2'
             ? (window.csuTestingChecklistResults.lbs2 || [])
@@ -138,11 +195,11 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
     items.forEach((item, index) => {
         const saved = (savedArray && savedArray[index]) ? savedArray[index] : {};
         const row = document.createElement('tr');
-        
+
         // Check if this is an EFI row (has AC/DC inputs)
         const isEfi = item.Description && item.Description.includes('EFI');
         let descriptionContent;
-        
+
         if (isEfi) {
             const acValue = saved.acValue || '';
             const dcValue = saved.dcValue || '';
@@ -151,12 +208,12 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
                     <span style="font-size: 16px;">${item.Description}</span>
                     <div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap; justify-content: center;">
                         <span style="font-size: 14px;">AC:</span>
-                        <input type="number" disabled name="${dataKey}_ac_${index}" value="${acValue}" 
-                               style="width: 50px; padding: 2px 4px; border: 2px solid #000; font-weight: bold; text-align: center;" 
+                        <input type="number" disabled name="${dataKey}_ac_${index}" value="${acValue}"
+                               style="width: 50px; padding: 2px 4px; border: 2px solid #000; font-weight: bold; text-align: center;"
                                placeholder="0" />
                         <span style="font-size: 14px;">DC:</span>
-                        <input type="number" disabled name="${dataKey}_dc_${index}" value="${dcValue}" 
-                               style="width: 50px; padding: 2px 4px; border: 2px solid #000; font-weight: bold; text-align: center;" 
+                        <input type="number" disabled name="${dataKey}_dc_${index}" value="${dcValue}"
+                               style="width: 50px; padding: 2px 4px; border: 2px solid #000; font-weight: bold; text-align: center;"
                                placeholder="0" />
                     </div>
                 </div>
@@ -164,11 +221,11 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
         } else {
             descriptionContent = item.Description;
         }
-        
+
         // Get saved remote and supervisory values, convert "N/A" back to "-" for display
         const remoteValue = saved.remote === 'N/A' ? '-' : (saved.remote || '');
         const supervisoryValue = saved.supervisory === 'N/A' ? '-' : (saved.supervisory || '');
-        
+
         row.innerHTML = `
             <td style="text-align: center;">${item.No}</td>
             <td style="text-align: center;">${item.IOModuleCard}</td>
@@ -176,13 +233,13 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
             <td style="text-align: center;">${item.IOA}</td>
             <td style="text-align: center;">${item.Status}</td>
             <td style="text-align: center;">
-                <input type="text" name="${dataKey}_remote_${index}" value="${remoteValue}" 
-                       style="width: 60px; text-align: center; border: 2px solid #ccc; font-weight: bold;" 
+                <input type="text" name="${dataKey}_remote_${index}" value="${remoteValue}"
+                       style="width: 60px; text-align: center; border: 2px solid #ccc; font-weight: bold;"
                         />
             </td>
             <td style="text-align: center;">
-                <input type="text" name="${dataKey}_supervisory_${index}" value="${supervisoryValue}" 
-                       style="width: 60px; text-align: center; border: 2px solid #ccc; font-weight: bold;" 
+                <input type="text" name="${dataKey}_supervisory_${index}" value="${supervisoryValue}"
+                       style="width: 60px; text-align: center; border: 2px solid #ccc; font-weight: bold;"
                         />
             </td>
         `;
@@ -193,7 +250,7 @@ function generateTableRows(tbodyId, items, dataKey, isLbs2Or3 = false) {
 // Save pre-requisite test data
 function savePreRequisiteTestData() {
     console.log('Saving CSU Testing Checklist data...');
-    
+
     if (!window.csuTestingChecklistResults) {
         window.csuTestingChecklistResults = {
             lbs1: [],
@@ -209,7 +266,7 @@ function savePreRequisiteTestData() {
 
     // Save LBS 1 data
     saveTableData('LBS1Tbody', 'lbs1', window.csuTestingChecklistResults.lbs1);
-    
+
     // Save LBS 2 data
     saveTableData('LBS2Tbody', 'lbs2', window.csuTestingChecklistResults.lbs2);
 
@@ -232,22 +289,22 @@ function saveTableData(tbodyId, dataKey, targetArray) {
     const rows = document.querySelectorAll(`#${tbodyId} tr`);
     rows.forEach((row, index) => {
         const cells = row.querySelectorAll('td');
-        
+
         // Check for AC/DC inputs (EFI rows)
         const acInput = row.querySelector(`input[name="${dataKey}_ac_${index}"]`);
         const dcInput = row.querySelector(`input[name="${dataKey}_dc_${index}"]`);
         let description = cells[2] ? cells[2].textContent.trim() : '';
         let acValue = '';
         let dcValue = '';
-        
+
         if (acInput && dcInput) {
             acValue = acInput.value;
             dcValue = dcInput.value;
         }
-        
+
         const ioa = cells[3] ? cells[3].textContent.trim() : '';
         const status = cells[4] ? cells[4].textContent.trim() : '';
-        
+
         // Get remote value - convert "-" to "N/A" for storage
         const remoteInput = row.querySelector(`input[name="${dataKey}_remote_${index}"]`);
         let remoteValue = remoteInput ? remoteInput.value : '';
@@ -255,7 +312,7 @@ function saveTableData(tbodyId, dataKey, targetArray) {
         if (remoteValue === '-') {
             remoteValue = 'N/A';
         }
-        
+
         // Get supervisory value - convert "-" to "N/A" for storage
         const supervisoryInput = row.querySelector(`input[name="${dataKey}_supervisory_${index}"]`);
         let supervisoryValue = supervisoryInput ? supervisoryInput.value : '';
@@ -263,7 +320,7 @@ function saveTableData(tbodyId, dataKey, targetArray) {
         if (supervisoryValue === '-') {
             supervisoryValue = 'N/A';
         }
-        
+
         targetArray.push({
             Description: description,
             IOA: ioa,
@@ -294,7 +351,7 @@ function clearAllCSU() {
             input.dispatchEvent(new Event('input', { bubbles: true }));
         }
     });
-    
+
     // Also clear any AC/DC input fields (EFI rows)
     const numberInputs = document.querySelectorAll('#LBS1Tbody input[type="number"], #LBS2Tbody input[type="number"], #LBS3Tbody input[type="number"]');
     numberInputs.forEach(input => {
@@ -361,7 +418,7 @@ function attachNavigationEvents() {
         prevBtn.addEventListener('click', goToPreviousPage);
     } else {
         document.querySelectorAll('button').forEach(btn => {
-            if (btn.textContent.toLowerCase().includes('previous') || 
+            if (btn.textContent.toLowerCase().includes('previous') ||
                 btn.textContent.toLowerCase().includes('back')) {
                 btn.onclick = null;
                 btn.addEventListener('click', goToPreviousPage);
@@ -376,7 +433,7 @@ function attachNavigationEvents() {
         nextBtn.addEventListener('click', goToNext);
     } else {
         document.querySelectorAll('button').forEach(btn => {
-            if (btn.textContent.toLowerCase().includes('next') || 
+            if (btn.textContent.toLowerCase().includes('next') ||
                 btn.textContent.toLowerCase().includes('continue')) {
                 btn.onclick = null;
                 btn.addEventListener('click', goToNext);
