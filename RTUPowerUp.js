@@ -30,7 +30,7 @@ function generateRTUPowerUpSections() {
     section.className = 'rtu-powerup-section';
     section.innerHTML = `
         <div class="rtu-powerup-test">
-            <label>RTU Power Up:</label>
+            <label>RTU Power Up: <span style="color: red; font-weight: bold;">(To be filled by the tester)</span></label>
             <table>
                 <thead>
                     <tr>
@@ -45,7 +45,7 @@ function generateRTUPowerUpSections() {
             </table>
         </div>
         <div class="rtu-powerup-inspection">
-            <label>RTU Power Up Inspection:</label>
+            <label>RTU Power Up Inspection: <span style="color: red; font-weight: bold;">(To be filled by the tester)</span></label>
             <table>
                 <thead>
                     <tr>

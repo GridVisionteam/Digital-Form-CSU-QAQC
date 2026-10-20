@@ -30,7 +30,7 @@ function generatePanelSections() {
     section.className = 'panel-section';
     section.innerHTML = `
         <div class="physical-inspections">
-            <label>Physical Inspections:</label>
+            <label>Physical Inspections: <span style="color: red; font-weight: bold;">(To be filled by the tester)</span></label>
             <table>
                 <thead>
                     <tr>
@@ -46,7 +46,7 @@ function generatePanelSections() {
             </table>
         </div>
         <div class="quality-inspections">
-            <label>Quality Inspections</label>
+            <label>Quality Inspections: <span style="color: red; font-weight: bold;">(To be filled by the tester)</span></label>
             <table>
                 <thead>
                     <tr>
